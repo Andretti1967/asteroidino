@@ -1,0 +1,11 @@
+{
+  "name": "vector_logger",
+  "version": "1.0.0",
+  "description": "Vector display output logger for debugging and analysis (Serial output)",
+  "keywords": ["vector", "logger", "debug", "dac", "serial"],
+  "authors": {
+    "name": "Asteroidino Team"
+  },
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

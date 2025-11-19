@@ -1,0 +1,93 @@
+
+Please build project in debug configuration to get more details about an exception.
+See https://docs.platformio.org/page/projectconf/build_configurations.html
+
+
+--- Terminal on /dev/cu.usbserial-110 | 115200 8-N-1
+--- Available filters and text transformations: colorize, debug, default, direct, esp32_exception_decoder, hexlify, log2file, nocontrol, printable, send_on_enter, time
+--- More details at https://bit.ly/pio-monitor-filters
+--- Quit: Ctrl+C | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+[37m*[37m** ZP[0x5B]=0x00, PC=0x786D, A=[37m0[37mxCA, P=0xB0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x69F2, A=[37m0[37mx00, P=0x30
+[37m*[37m** NMI #5400 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** Status: PC=0x6813 (ROM), Cyc[37ml[37mes/sec=~114033.2M
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #5460 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x786B, A=[37m0[37mxCB, P=0xB0
+[37m*[37m** NMI #5520 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x7BFF, A=[37m0[37mx08, P=0x30
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** CPU cycles/sec: 1337083, PC:[37m [37m0x6813
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #5580 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x7ACD, A=[37m0[37mx00, P=0x36
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #5640 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x7007, A=[37m0[37mx08, P=0x30
+[37m*[37m** BMI LOOP [2000]: PC=0x680F, [37mA[37m=0x7F, P=0x30, N=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x7C3D, A=[37m0[37mx70, P=0x30
+[37m*[37m** NMI #5700 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #5760 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x730F, A=[37m0[37mx03, P=0xB1
+[37m*[37m** CPU cycles/sec: 1338304, PC:[37m [37m0x6813
+[37m*[37m** NMI #5820 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x7BEA, A=[37m0[37mx82, P=0x30
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #5880 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #5940 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x7CEC, A=[37m0[37mx00, P=0x30
+[37m*[37m** ZP[0x5B]=0x00, PC=0x7BDA, A=[37m0[37mx00, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #6000 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** CPU cycles/sec: 1338912, PC:[37m [37m0x7BD8
+[37m*[37m** NMI #6060 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x01, PC=0x7B58, A=[37m0[37mx00, P=0x36
+[37m*[37m** ZP[0x5B]=0x00, PC=0x731A, A=[37m0[37mx03, P=0xB0
+[37m*[37m** NMI #6120 edge, req=1, inhib[37mi[37mt=0, line=0
+*** ZP[0x5B]=0x00, [37mP[37mC=0x7BDE, A=0x2C, P=0x30
+[37m*[37m** ZP[0x5B]=0x00, PC=0x7B58, A=[37m0[37mx00, P=0x36
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #6180 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x7C22, A=[37m0[37mxE4, P=0x32
+[37m*[37m** NMI #6240 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x730A, A=[37m0[37mx03, P=0x30
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #6300 edge, req=1, inhib[37mi[37mt=0, line=0
+*** CPU cycles/sec:[37m [37m1338263, PC: 0x7ABE
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #6360 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x784F, A=[37m0[37mxC2, P=0xB0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x7C1A, A=[37m0[37mx6C, P=0x30
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #6420 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #6480 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x786D, A=[37m0[37mxCB, P=0xB0
+[37m*[37m** NMI #6540 edge, req=1, inhib[37mi[37mt=0, line=0
+*** ZP[0x5B]=0x00, [37mP[37mC=0x7ACD, A=0x00, P=0x36
+[37m*[37m** CPU cycles/sec: 1338793, PC:[37m [37m0x6813
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** NMI #6600 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x680C, A=[37m0[37mx7F, P=0x32
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6813, A=[37m0[37mx7F, P=0x32
+[37m*[37m** Status: PC=0x6813 (ROM), Cyc[37ml[37mes/sec=~114102.8M
+[37m*[37m** NMI #6660 edge, req=1, inhib[37mi[37mt=0, line=0
+[37m*[37m** ZP[0x5B]=0x00, PC=0x6F5F, A=[37m0[37mx00, P=0x30

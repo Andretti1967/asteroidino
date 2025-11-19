@@ -1,0 +1,1000 @@
+
+Please build project in debug configuration to get more details about an exception.
+See https://docs.platformio.org/page/projectconf/build_configurations.html
+
+
+--- Terminal on /dev/cu.usbserial-110 | 115200 8-N-1
+--- Available filters and text transformations: colorize, debug, default, direct, esp32_exception_decoder, hexlify, log2file, nocontrol, printable, send_on_enter, time
+--- More details at https://bit.ly/pio-monitor-filters
+--- Quit: Ctrl+C | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+
+*** DVG GO [11587] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11588] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** NMI #46440 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11589] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x7C22, A=0xE4, P=0x32
+
+*** DVG GO [11590] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11591] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11592] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11593] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11594] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11595] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11596] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11597] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11598] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11599] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11600] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11601] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11602] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11603] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** NMI #46500 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11604] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11605] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11606] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11607] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11608] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11609] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11610] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** CPU cycles/sec: 1266461, PC: 0x6813
+
+*** DVG GO [11611] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11612] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11613] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11614] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11615] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11616] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11617] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11618] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** NMI #46560 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11619] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x7CEC, A=0x00, P=0x30
+
+*** DVG GO [11620] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11621] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11622] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11623] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11624] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11625] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11626] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11627] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11628] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11629] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11630] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11631] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11632] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11633] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** NMI #46620 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11634] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11635] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11636] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11637] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11638] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11639] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11640] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11641] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11642] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11643] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11644] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11645] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11646] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11647] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11648] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** NMI #46680 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11649] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x783E, A=0xCB, P=0x32
+
+*** DVG GO [11650] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11651] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11652] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11653] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11654] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11655] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11656] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11657] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11658] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11659] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11660] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11661] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11662] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11663] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** NMI #46740 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11664] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11665] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11666] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11667] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11668] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11669] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11670] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** CPU cycles/sec: 1238682, PC: 0x6813
+
+*** DVG GO [11671] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11672] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11673] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11674] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11675] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11676] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11677] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11678] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** NMI #46800 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11679] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x7867, A=0xF3, P=0xB0
+
+*** DVG GO [11680] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11681] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11682] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11683] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11684] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11685] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x701D, A=0x09, P=0xB0
+
+*** DVG GO [11686] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11687] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11688] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11689] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11690] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11691] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x7C07, A=0x19, P=0x32
+
+*** DVG GO [11692] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11693] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** NMI #46860 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11694] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11695] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11696] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11697] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x7763, A=0xDE, P=0x30
+
+*** DVG GO [11698] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11699] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11700] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11701] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11702] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** BMI LOOP [17000]: PC=0x680F, A=0x7F, P=0x30, N=0
+
+*** DVG GO [11703] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11704] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11705] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11706] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11707] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11708] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** NMI #46920 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11709] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x01, PC=0x7B58, A=0x00, P=0x36
+
+*** DVG GO [11710] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11711] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11712] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11713] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11714] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11715] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x7ACD, A=0x00, P=0x36
+
+*** DVG GO [11716] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11717] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11718] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11719] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11720] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11721] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11722] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11723] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** NMI #46980 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11724] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11725] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** Status: PC=0x6813 (ROM), Cycles/sec=~228055.8M
+
+*** DVG GO [11726] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11727] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11728] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x7C26, A=0x02, P=0x31
+
+*** DVG GO [11729] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11730] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11731] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11732] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** CPU cycles/sec: 1276135, PC: 0x7CDE
+
+*** DVG GO [11733] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11734] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x7321, A=0x03, P=0x30
+
+*** DVG GO [11735] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11736] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11737] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11738] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** NMI #47040 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11739] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11740] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6A22, A=0xED, P=0xB0
+
+*** DVG GO [11741] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11742] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11743] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11744] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11745] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11746] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11747] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11748] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11749] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11750] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11751] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11752] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11753] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** NMI #47100 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11754] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11755] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11756] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11757] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11758] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11759] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x7831, A=0xCB, P=0x32
+
+*** DVG GO [11760] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11761] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11762] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11763] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11764] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11765] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11766] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11767] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11768] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** NMI #47160 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11769] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11770] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11771] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11772] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11773] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11774] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11775] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11776] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11777] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11778] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11779] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11780] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11781] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11782] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11783] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** NMI #47220 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11784] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11785] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11786] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11787] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11788] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11789] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x785F, A=0x28, P=0x31
+
+*** DVG GO [11790] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11791] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11792] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** CPU cycles/sec: 1250537, PC: 0x7C39
+
+*** DVG GO [11793] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11794] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11795] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11796] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11797] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11798] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** NMI #47280 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11799] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11800] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11801] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11802] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11803] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11804] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11805] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11806] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11807] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11808] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11809] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11810] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11811] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11812] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+*** ZP[0x5B]=0x00, PC=0x6813, A=0x7F, P=0x32
+
+*** DVG GO [11813] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+*** NMI #47340 edge, req=1, inhibit=0, line=0
+
+*** DVG GO [11814] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11815] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11816] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11817] WRITE! ***
+    PC=0x6825, value=0xE0
+    VRAM[0..7]: 01 E0 E4 A0  40 11 00 70
+
+*** DVG GO [11818] WRITE! ***
+    PC=0x6825, value=0xE2
+    VRAM[0..7]: 01 E2 E4 A0  40 11 00 70
+
+*** DVG GO [11819] WRITE! ***
+    PC=0x6825, value=0xE0
