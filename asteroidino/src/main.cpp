@@ -39,6 +39,9 @@ struct {
     int      count;
 } vector_buffer;
 
+// DVG frame counter for debugging
+int dvg_frame_count = 0;
+
 // DVG state machine
 struct {
     uint16_t pc;           // Program counter in vector RAM
@@ -171,7 +174,21 @@ void dvg_run_state_machine() {
     if (!dvg_state.running) return;
     
     static int debug_count = 0;
-    bool debug = (debug_count < 10);
+    static int last_frame_debugged = -1;
+    extern int dvg_frame_count;  // Defined globally below
+    
+    // Reset debug_count at start of new frame
+    if (dvg_frame_count != last_frame_debugged) {
+        debug_count = 0;
+        last_frame_debugged = dvg_frame_count;
+    }
+    
+    // Debug first 50 instructions of frames 7-9 (when ROM data is processed)
+    bool debug = (dvg_frame_count >= 7 && dvg_frame_count <= 9 && debug_count < 50);
+    
+    if (dvg_frame_count == 7 && debug_count == 0) {
+        Serial.printf("\n=== DVG DEBUG: Starting Frame %d ===\n", dvg_frame_count);
+    }
     
     dvg_state.halt = false;
     int max_iterations = 1000;  // Prevent infinite loops
@@ -207,8 +224,13 @@ void dvg_run_state_machine() {
         }
         
         if (debug) {
-            Serial.printf("*** DVG [%d]: PC=0x%04X, Word=0x%04X\n", 
-                         debug_count, dvg_state.pc, word);
+            Serial.printf("*** DVG [F%d I%d]: PC=0x%04X, Word=0x%04X\n", 
+                         dvg_frame_count, debug_count, dvg_state.pc, word);
+            debug_count++;
+        }
+        
+        if (debug && dvg_addr >= 0x400) {
+            Serial.printf("    -> Reading from Vector ROM at offset 0x%04X\n", (dvg_addr - 0x400) * 2);
         }
         
         // Decode opcode from high 4 bits
@@ -362,11 +384,11 @@ void dvg_run_state_machine() {
     
     dvg_state.running = false;
     
-    // CSV output for first 100 DVG runs
+    // CSV output for first 2000 DVG runs
     static int csv_count = 0;
     static bool csv_header = false;
     
-    if (csv_count < 100) {
+    if (csv_count < 2000) {
         if (!csv_header) {
             Serial.println("\n=== ASTEROIDS VECTOR DATA CSV ===");
             Serial.println("Frame,VectorCount,Index,X,Y,Z");
@@ -622,7 +644,7 @@ void cpu6502_write_callback(uint16_t addr, uint8_t value) {
     // Vector RAM: 0x4000-0x47FF
     if (addr >= 0x4000 && addr < 0x4800) {
         static int write_count = 0;
-        if (write_count++ < 10) {
+        if (write_count++ < 100) {  // Show first 100 writes instead of 10
             Serial.printf("*** Vector RAM write [%d]: 0x%04X = 0x%02X\n", write_count, addr, value);
         }
         vector_ram[addr - 0x4000] = value;
@@ -646,12 +668,27 @@ void cpu6502_write_callback(uint16_t addr, uint8_t value) {
         static int go_count = 0;
         go_count++;
         
+        extern int dvg_frame_count;
+        dvg_frame_count++;  // Increment here where DVG actually runs!
+        
         // ALWAYS show DVG GO with more context
         Serial.printf("\n*** DVG GO [%d] WRITE! ***\n", go_count);
         Serial.printf("    PC=0x%04X, value=0x%02X\n", cpu->GetPC(), value);
-        Serial.printf("    VRAM[0..7]: %02X %02X %02X %02X  %02X %02X %02X %02X\n",
-                     vector_ram[0], vector_ram[1], vector_ram[2], vector_ram[3],
-                     vector_ram[4], vector_ram[5], vector_ram[6], vector_ram[7]);
+        
+        // Show first 64 bytes of Vector RAM
+        if (go_count <= 2) {
+            Serial.printf("    VRAM DUMP (first 64 bytes):\n");
+            for (int i = 0; i < 64; i += 8) {
+                Serial.printf("    %04X: %02X %02X %02X %02X  %02X %02X %02X %02X\n", 
+                             i,
+                             vector_ram[i], vector_ram[i+1], vector_ram[i+2], vector_ram[i+3],
+                             vector_ram[i+4], vector_ram[i+5], vector_ram[i+6], vector_ram[i+7]);
+            }
+        } else {
+            Serial.printf("    VRAM[0..7]: %02X %02X %02X %02X  %02X %02X %02X %02X\n",
+                         vector_ram[0], vector_ram[1], vector_ram[2], vector_ram[3],
+                         vector_ram[4], vector_ram[5], vector_ram[6], vector_ram[7]);
+        }
         
         // Start DVG processing from address in 'value'
         // In Asteroids, the value written is typically 0x00 (start from beginning)
@@ -938,6 +975,8 @@ void dvg_execute() {
 }
 
 void process_vector_list() {
+    // Don't increment frame_count here - it's done in DVG GO handler!
+    
     // Check if vector RAM has any non-zero data
     bool has_data = false;
     for (int i = 0; i < 32 && !has_data; i++) {
