@@ -19,6 +19,7 @@
 // ROMs konvertiert - inkludiere sie
 #define ASTEROID_ROMS_CONVERTED
 #include "asteroid_roms.h"
+#include "dvg_prom.h"
 
 // ============================================================================
 // GLOBAL STATE
@@ -42,7 +43,7 @@ struct {
 // DVG frame counter for debugging
 int dvg_frame_count = 0;
 
-// DVG state machine
+// DVG state machine (MAME-style with PROM)
 struct {
     uint16_t pc;           // Program counter in vector RAM
     int16_t  x, y;         // Current beam position
@@ -50,7 +51,9 @@ struct {
     uint8_t  scale;        // Current scale factor (0-15)
     uint8_t  intensity;    // Current intensity (0-15)
     uint16_t dvx, dvy;     // Delta X and Y (12-bit signed)
-    uint8_t  op;           // Current opcode
+    uint8_t  op;           // Current opcode from vector RAM
+    uint16_t data;         // Current data word from vector RAM
+    uint8_t  state_latch;  // PROM state latch (4 bits + halt flag)
     uint16_t stack[4];     // Subroutine stack
     uint8_t  stack_ptr;    // Stack pointer
     bool     halt;         // Halt flag
@@ -170,214 +173,205 @@ void dvg_process_vector() {
     dvg_add_vector(dx, dy, dvg_state.intensity);
 }
 
+// Helper: Calculate PROM address from state_latch, opcode, and halt
+uint8_t dvg_state_addr() {
+    // MAME: addr = ((((state_latch >> 4) ^ 1) & 1) << 7) | (state_latch & 0xf)
+    // If OP3 is set, add opcode bits
+    uint8_t addr = ((((dvg_state.state_latch >> 4) ^ 1) & 1) << 7) | (dvg_state.state_latch & 0x0f);
+    
+    // ST3 check: bit 3 of state_latch
+    if (dvg_state.state_latch & 0x08) {
+        addr |= ((dvg_state.op & 7) << 4);
+    }
+    
+    return addr;
+}
+
+// Helper: Update data bus (read word from Vector RAM/ROM)
+void dvg_update_databus() {
+    // DVG uses low bit of state for address (byte selection)
+    uint16_t dvg_addr = dvg_state.pc;
+    uint16_t byte_addr = (dvg_addr << 1) + (dvg_state.state_latch & 1);
+    
+    if (dvg_addr < 0x400) {
+        // Read from Vector RAM
+        if (byte_addr < 2048) {
+            dvg_state.data = vector_ram[byte_addr];
+        } else {
+            dvg_state.data = 0x00;
+        }
+    } else if (dvg_addr < 0x800) {
+        // Read from Vector ROM
+        uint16_t rom_offset = (dvg_addr - 0x400) * 2 + (dvg_state.state_latch & 1);
+        if (rom_offset < 2048) {
+            dvg_state.data = pgm_read_byte(&asteroid_rom_vector[rom_offset]);
+        } else {
+            dvg_state.data = 0x00;
+        }
+    } else {
+        dvg_state.data = 0x00;
+    }
+}
+
+// DVG Handler 0: DMAPUSH (push to stack)
+int dvg_handler_0() {
+    uint8_t op0 = dvg_state.op & 1;
+    if (!op0) {
+        dvg_state.stack_ptr = (dvg_state.stack_ptr + 1) & 0xf;
+        dvg_state.stack[dvg_state.stack_ptr & 3] = dvg_state.pc;
+    }
+    return 0;
+}
+
+// DVG Handler 1: DMALD (load from stack or jump)
+int dvg_handler_1() {
+    uint8_t op0 = dvg_state.op & 1;
+    if (op0) {
+        dvg_state.pc = dvg_state.stack[dvg_state.stack_ptr & 3];
+        dvg_state.stack_ptr = (dvg_state.stack_ptr - 1) & 0xf;
+    } else {
+        dvg_state.pc = dvg_state.dvy;
+    }
+    return 0;
+}
+
+// DVG Handler 2: GOSTROBE (draw vector)
+int dvg_handler_2() {
+    // This draws the actual vector - simplified for now
+    dvg_process_vector();
+    return 0;
+}
+
+// DVG Handler 3: HALTSTROBE (halt if OP0 clear)
+int dvg_handler_3() {
+    uint8_t op0 = dvg_state.op & 1;
+    dvg_state.halt = !op0;
+    
+    if (!op0) {
+        dvg_state.xpos = dvg_state.dvx & 0xfff;
+        dvg_state.ypos = dvg_state.dvy & 0xfff;
+        dvg_add_vector(0, 0, 0);  // Draw to final position
+    }
+    return 0;
+}
+
+// DVG Handler 4: LATCH0 (latch low byte)
+int dvg_handler_4() {
+    dvg_state.dvy &= 0xf00;
+    if (dvg_state.op != 0xf) {
+        dvg_state.dvy = (dvg_state.dvy & 0xf00) | dvg_state.data;
+    }
+    dvg_state.pc++;
+    return 0;
+}
+
+// DVG Handler 5: LATCH1 (latch opcode and high Y)
+int dvg_handler_5() {
+    dvg_state.dvy = (dvg_state.dvy & 0xff) | ((dvg_state.data & 0xf) << 8);
+    dvg_state.op = dvg_state.data >> 4;
+    
+    if (dvg_state.op == 0xf) {
+        dvg_state.dvx &= 0xf00;
+        dvg_state.dvy &= 0xf00;
+    }
+    return 0;
+}
+
+// DVG Handler 6: LATCH2 (latch low X and scale)
+int dvg_handler_6() {
+    dvg_state.dvx &= 0xf00;
+    if (dvg_state.op != 0xf) {
+        dvg_state.dvx = (dvg_state.dvx & 0xf00) | dvg_state.data;
+    }
+    
+    uint8_t op1 = (dvg_state.op >> 1) & 1;
+    uint8_t op3 = (dvg_state.op >> 3) & 1;
+    if (op1 && op3) {
+        dvg_state.scale = dvg_state.intensity;
+    }
+    
+    dvg_state.pc++;
+    return 0;
+}
+
+// DVG Handler 7: LATCH3 (latch high X and intensity)
+int dvg_handler_7() {
+    dvg_state.dvx = (dvg_state.dvx & 0xff) | ((dvg_state.data & 0xf) << 8);
+    dvg_state.intensity = dvg_state.data >> 4;
+    return 0;
+}
+
 void dvg_run_state_machine() {
     if (!dvg_state.running) return;
     
     static int debug_count = 0;
     static int last_frame_debugged = -1;
-    extern int dvg_frame_count;  // Defined globally below
+    extern int dvg_frame_count;
     
-    // Reset debug_count at start of new frame
     if (dvg_frame_count != last_frame_debugged) {
         debug_count = 0;
         last_frame_debugged = dvg_frame_count;
     }
     
-    // Debug first 50 instructions of frames 7-9 (when ROM data is processed)
     bool debug = (dvg_frame_count >= 7 && dvg_frame_count <= 9 && debug_count < 50);
     
     if (dvg_frame_count == 7 && debug_count == 0) {
-        Serial.printf("\n=== DVG DEBUG: Starting Frame %d ===\n", dvg_frame_count);
+        Serial.printf("\n=== DVG PROM-BASED STATE MACHINE: Frame %d ===\n", dvg_frame_count);
     }
     
     dvg_state.halt = false;
-    int max_iterations = 1000;  // Prevent infinite loops
+    int max_iterations = 1000;
+    int cycles = 0;
     
-    while (!dvg_state.halt && max_iterations-- > 0) {
-        // DVG PC is in vector address space (0x000-0x7FF)
-        // Map to physical memory:
-        //   0x000-0x3FF (0-1023) -> Vector RAM 0x4000-0x43FF
-        //   0x400-0x7FF (1024-2047) -> Vector ROM 0x5000-0x53FF
-        uint16_t dvg_addr = dvg_state.pc;
-        uint16_t word;
+    if (debug) {
+        Serial.printf("DVG State Machine Start: PC=0x%03X, state_latch=0x%02X\n",
+            dvg_state.pc, dvg_state.state_latch);
+    }
+    
+    while (!dvg_state.halt && max_iterations-- > 0 && cycles < 10000) {
+        // PROM-based state machine (MAME-style)
+        // Calculate PROM address
+        uint8_t prom_addr = dvg_state_addr();
+        uint8_t prom_data = dvg_prom_read(prom_addr);
         
-        if (dvg_addr < 0x400) {
-            // Read from Vector RAM (0x4000-0x43FF)
-            uint16_t ram_offset = dvg_addr * 2;
-            if (ram_offset < 2048) {
-                word = (vector_ram[ram_offset] << 8) | vector_ram[ram_offset + 1];
-            } else {
-                word = 0x0000;
-            }
-        } else if (dvg_addr < 0x800) {
-            // Read from Vector ROM (0x5000-0x57FF)
-            uint16_t rom_offset = (dvg_addr - 0x400) * 2;
-            if (rom_offset < 2048) {
-                word = (asteroid_rom_vector[rom_offset] << 8) | asteroid_rom_vector[rom_offset + 1];
-            } else {
-                word = 0x0000;
-            }
-        } else {
-            Serial.printf("*** DVG: PC out of range: 0x%04X\n", dvg_addr);
-            dvg_state.halt = true;
-            break;
+        // Get next state from PROM (034602-01.c8)
+        uint8_t old_latch = dvg_state.state_latch;
+        dvg_state.state_latch = (dvg_state.state_latch & 0x10) | (prom_data & 0x0f);
+        
+        if (debug && cycles < 20) {
+            Serial.printf("  [%d] PROM[0x%02X]=0x%X → latch:0x%02X→0x%02X ST3=%d\n",
+                cycles, prom_addr, prom_data, old_latch, dvg_state.state_latch,
+                (dvg_state.state_latch & 0x08) ? 1 : 0);
         }
         
-        if (debug) {
-            Serial.printf("*** DVG [F%d I%d]: PC=0x%04X, Word=0x%04X\n", 
-                         dvg_frame_count, debug_count, dvg_state.pc, word);
-            debug_count++;
+        // ST3 check: if bit 3 is set, update databus and execute handler
+        if (dvg_state.state_latch & 0x08) {
+            dvg_update_databus();
+            
+            uint8_t handler = dvg_state.state_latch & 0x07;
+            if (debug && debug_count < 50) {
+                Serial.printf("  Handler %d: PC:%03X Op:%X Data:%02X\n", 
+                    handler, dvg_state.pc, dvg_state.op, dvg_state.data);
+            }
+            
+            // Decode state and call appropriate handler
+            switch (handler) {
+                case 0: cycles += dvg_handler_0(); break;  // DMAPUSH
+                case 1: cycles += dvg_handler_1(); break;  // DMALD
+                case 2: cycles += dvg_handler_2(); break;  // GOSTROBE
+                case 3: cycles += dvg_handler_3(); break;  // HALTSTROBE
+                case 4: cycles += dvg_handler_4(); break;  // LATCH0
+                case 5: cycles += dvg_handler_5(); break;  // LATCH1
+                case 6: cycles += dvg_handler_6(); break;  // LATCH2
+                case 7: cycles += dvg_handler_7(); break;  // LATCH3
+            }
+            
+            if (debug && debug_count < 50) {
+                debug_count++;
+            }
         }
         
-        if (debug && dvg_addr >= 0x400) {
-            Serial.printf("    -> Reading from Vector ROM at offset 0x%04X\n", (dvg_addr - 0x400) * 2);
-        }
-        
-        // Decode opcode from high 4 bits
-        uint8_t opcode = (word >> 12) & 0x0F;
-        
-        switch (opcode) {
-            case 0x0:
-            case 0x1:
-            case 0x2:
-            case 0x3:
-            case 0x4:
-            case 0x5:
-            case 0x6:
-            case 0x7:
-            case 0x8:
-            case 0x9: {
-                // VCTR: Vector command (opcode 0-9 is Y delta high bits + scale)
-                dvg_state.dvy = ((word >> 4) & 0x1FF) | ((word & 0x200) ? 0xFE00 : 0);
-                dvg_state.scale = word & 0x0F;
-                dvg_state.pc++;
-                
-                // Read second word (X delta + intensity)
-                if (dvg_state.pc < 0x800) {
-                    uint16_t word2 = (vector_ram[dvg_state.pc * 2] << 8) | vector_ram[dvg_state.pc * 2 + 1];
-                    dvg_state.dvx = (word2 >> 4) & 0xFFF;
-                    dvg_state.intensity = word2 & 0x0F;
-                    dvg_state.pc++;
-                    
-                    dvg_process_vector();
-                }
-                break;
-            }
-            
-            case 0xA: {
-                // LABS: Load absolute position
-                uint16_t y_abs = word & 0x3FF;
-                dvg_state.pc++;
-                
-                if (dvg_state.pc < 0x800) {
-                    uint16_t word2 = (vector_ram[dvg_state.pc * 2] << 8) | vector_ram[dvg_state.pc * 2 + 1];
-                    uint16_t x_abs = word2 & 0x3FF;
-                    dvg_state.pc++;
-                    
-                    dvg_state.x = x_abs;
-                    dvg_state.y = y_abs;
-                    
-                    if (debug) {
-                        Serial.printf("*** DVG LABS: X=%d, Y=%d\n", x_abs, y_abs);
-                    }
-                }
-                break;
-            }
-            
-            case 0xB: {
-                // HALT or STAT (set color/intensity)
-                if ((word & 0x0FFF) == 0) {
-                    if (debug) {
-                        Serial.printf("*** DVG HALT\n");
-                    }
-                    dvg_state.halt = true;
-                } else {
-                    // STAT - Set color and intensity
-                    // In Asteroids, this sets the beam color and intensity for subsequent vectors
-                    uint8_t color = (word >> 4) & 0x0F;
-                    uint8_t intensity = word & 0x0F;
-                    dvg_state.intensity = intensity;
-                    dvg_state.pc++;
-                    
-                    if (debug) {
-                        Serial.printf("*** DVG STAT (0xB): Color=%d, Intensity=%d\n", color, intensity);
-                    }
-                }
-                break;
-            }
-            
-            case 0xC: {
-                // JSRL: Jump to subroutine
-                uint16_t addr = word & 0x0FFF;
-                if (dvg_state.stack_ptr < 4) {
-                    dvg_state.stack[dvg_state.stack_ptr++] = dvg_state.pc + 1;
-                }
-                dvg_state.pc = addr;
-                
-                if (debug) {
-                    Serial.printf("*** DVG JSRL: 0x%04X (SP=%d)\n", addr, dvg_state.stack_ptr);
-                }
-                break;
-            }
-            
-            case 0xD: {
-                // RTSL: Return from subroutine
-                if (dvg_state.stack_ptr > 0) {
-                    dvg_state.pc = dvg_state.stack[--dvg_state.stack_ptr];
-                } else {
-                    dvg_state.halt = true;
-                }
-                
-                if (debug) {
-                    Serial.printf("*** DVG RTSL: PC=0x%04X (SP=%d)\n", dvg_state.pc, dvg_state.stack_ptr);
-                }
-                break;
-            }
-            
-            case 0xE: {
-                // JMPL: Jump
-                uint16_t addr = word & 0x0FFF;
-                dvg_state.pc = addr;
-                
-                if (debug) {
-                    Serial.printf("*** DVG JMPL: 0x%04X\n", addr);
-                }
-                break;
-            }
-            
-            case 0xF: {
-                // SVEC: Short vector
-                int8_t dx = ((word >> 8) & 0x07);
-                if (word & 0x0400) dx = -dx;
-                
-                int8_t dy = ((word >> 11) & 0x07);
-                if (word & 0x4000) dy = -dy;
-                
-                uint8_t intensity = (word >> 4) & 0x0F;
-                uint8_t scale = (word >> 2) & 0x03;
-                
-                // SVEC uses much smaller scale
-                int scale_val = (4 << scale);
-                dx = (dx * scale_val);
-                dy = (dy * scale_val);
-                
-                dvg_add_vector(dx, dy, intensity);
-                dvg_state.pc++;
-                
-                if (debug) {
-                    Serial.printf("*** DVG SVEC: dx=%d, dy=%d, scale=%d, i=%d\n", 
-                                 dx, dy, scale, intensity);
-                }
-                break;
-            }
-            
-            default:
-                if (debug) {
-                    Serial.printf("*** DVG: Unknown opcode 0x%X\n", opcode);
-                }
-                dvg_state.pc++;
-                break;
-            }  // end switch
+        cycles++;
     }  // end while
     
     if (debug_count < 10) debug_count++;
@@ -696,6 +690,11 @@ void cpu6502_write_callback(uint16_t addr, uint8_t value) {
         dvg_state.running = true;
         dvg_state.halt = false;
         dvg_state.stack_ptr = 0;
+        dvg_state.state_latch = 0x00;  // PROM: Initial state
+        dvg_state.op = 0;
+        dvg_state.data = 0;
+        dvg_state.dvx = 0;
+        dvg_state.dvy = 0;
         
         // Clear previous vector buffer
         vector_buffer.count = 0;
