@@ -71,13 +71,14 @@ struct {
     bool coin;
 } buttons;
 
-// DIP switch settings (DSW1) - default Asteroids settings
-// Bit 0-1: Language (00=Spanish, 01=French, 10=German, 11=English)
+// DIP switch settings (DSW1) - MAME default Asteroids settings
+// Bit 0-1: Language (00=English, 01=German, 10=French, 11=Spanish)
 // Bit 2:   Lives (0=4 ships, 1=3 ships)
 // Bit 3:   Center Mech (0=x1, 1=x2)
 // Bit 4-5: Right Mech (00=x1, 01=x4, 10=x5, 11=x6)
 // Bit 6-7: Coinage (00=Free Play, 01=1C/2C, 10=1C/1C, 11=2C/1C)
-uint8_t dip_switches = 0x83;  // English, 3 ships, 1C/1C
+// MAME default: 0x84 = 10000100 (English, 3 ships, 1C/1C)
+uint8_t dip_switches = 0x84;  // CORRECTED: English=00, Lives=3, Coinage=1C/1C
 
 // 3 kHz clock signal (bit 1 of IN0) - toggled by CPU cycle count
 bool clock_3khz = false;
@@ -128,6 +129,13 @@ uint64_t total_cpu_cycles = 0;
  */
 
 void dvg_add_vector(int16_t dx, int16_t dy, uint8_t intensity) {
+    // Debug logging (first 20 calls)
+    static int debug_calls = 0;
+    if (debug_calls < 20) {
+        Serial.printf("DVG_ADD_VECTOR[%d]: dx=%d, dy=%d, I=%d, state.x=%d, state.y=%d\n",
+            debug_calls++, dx, dy, intensity, dvg_state.x, dvg_state.y);
+    }
+    
     if (vector_buffer.count >= VECT_POINTS_PER_FRAME) {
         return;  // Buffer full
     }
@@ -155,6 +163,21 @@ void dvg_add_vector(int16_t dx, int16_t dy, uint8_t intensity) {
     vector_buffer.points[vector_buffer.count][1] = dvg_state.y;
     vector_buffer.intensity[vector_buffer.count] = intensity;
     vector_buffer.count++;
+    
+    // CSV logging of DVG vector output (first 5000 vectors)
+    static int vec_log_count = 0;
+    static bool vec_csv_header = false;
+    
+    if (vec_log_count < 5000) {
+        if (!vec_csv_header) {
+            Serial.println("\n=== DVG VECTOR OUTPUT (10-bit coords, 4-bit intensity) ===");
+            Serial.println("X,Y,Intensity");
+            vec_csv_header = true;
+        }
+        
+        Serial.printf("%d,%d,%d\n", dvg_state.x, dvg_state.y, intensity);
+        vec_log_count++;
+    }
 }
 
 void dvg_process_vector() {
@@ -313,9 +336,9 @@ void dvg_run_state_machine() {
         last_frame_debugged = dvg_frame_count;
     }
     
-    bool debug = (dvg_frame_count >= 7 && dvg_frame_count <= 9 && debug_count < 50);
+    bool debug = (dvg_frame_count >= 7 && dvg_frame_count <= 100 && debug_count < 50);
     
-    if (dvg_frame_count == 7 && debug_count == 0) {
+    if (dvg_frame_count >= 7 && dvg_frame_count <= 100 && debug_count == 0) {
         Serial.printf("\n=== DVG PROM-BASED STATE MACHINE: Frame %d ===\n", dvg_frame_count);
     }
     
@@ -378,24 +401,24 @@ void dvg_run_state_machine() {
     
     dvg_state.running = false;
     
-    // CSV output for first 2000 DVG runs
+    // CSV output for first 5000 DVG runs (10-bit DVG coordinates)
     static int csv_count = 0;
     static bool csv_header = false;
     
-    if (csv_count < 2000) {
+    if (csv_count < 5000) {
         if (!csv_header) {
-            Serial.println("\n=== ASTEROIDS VECTOR DATA CSV ===");
-            Serial.println("Frame,VectorCount,Index,X,Y,Z");
+            Serial.println("\n=== DVG VECTOR OUTPUT (10-bit coords 0-1023, 4-bit intensity 0-15) ===");
+            Serial.println("X,Y,Intensity");
             csv_header = true;
         }
         
-        // Output all vectors
+        // Output all vectors - convert from 12-bit DAC (0-4095) back to 10-bit DVG (0-1023)
         for (int i = 0; i < vector_buffer.count; i++) {
-            Serial.printf("%d,%d,%d,%d,%d,%d\n",
-                csv_count, vector_buffer.count, i,
-                vector_buffer.points[i][0],
-                vector_buffer.points[i][1],
-                vector_buffer.intensity[i]);
+            int dvg_x = (vector_buffer.points[i][0] * 1023) / 4095;
+            int dvg_y = (vector_buffer.points[i][1] * 1023) / 4095;
+            int intensity = (vector_buffer.intensity[i] * 15) / 255;
+            
+            Serial.printf("%d,%d,%d\n", dvg_x, dvg_y, intensity);
         }
         csv_count++;
     }
@@ -442,14 +465,6 @@ uint8_t cpu6502_read_callback(uint16_t addr) {
     if (addr >= 0x2000 && addr < 0x2008) {
         static int read_count = 0;
         
-        // CRITICAL: Show CPU state immediately after reading 0x2007
-        if (addr == 0x2007 && read_count < 20) {
-            uint8_t result_value = 0x7F;  // We return this
-            Serial.printf("*** IN0[%d] READ 0x2007 → WILL RETURN 0x%02X (should set N=0)\n",
-                         read_count, result_value);
-            read_count++;
-        }
-        
         bool debug = false;  // Other debug disabled
         if (debug) {
             read_count++;
@@ -461,20 +476,19 @@ uint8_t cpu6502_read_callback(uint16_t addr) {
         if (buttons.fire)        in0 |= 0x10;  // Bit 4
         // Bit 5: Diagnostic Step (not implemented)
         // Bit 6: TILT (not implemented)
-        // Bit 7: Self-Test Switch - ROM behavior analysis
+        // Bit 7: Self-Test Switch - Always 0 for normal gameplay
         
         // NORMAL GAMEPLAY MODE: bit 7 = 0
-        // Leave bit 7 = 0 for normal gameplay (DO NOT set bit 7)
+        // Leave bit 7 = 0 to run normal game code
         //
         // Reset handler at 0x7D08:
-        //   LDY $2007    ; Load IN0 into Y
-        //   BMI L7D50    ; Branch if bit 7=1 (N flag set)
+        //   LDY $2007    ; Load IN0 bit 7
+        //   BMI L7D50    ; If bit 7=1, branch to self-test
+        //   Falls through to JMP $6803 (normal game init at 0x6803)
         //
-        // - If bit 7=0: Falls through to 0x7D0D → JMP $6803 (normal game init)
-        // - If bit 7=1: BMI branches to 0x7D50 (diagnostic/self-test code)
-        //
-        // With bit 7=1, we were taking the diagnostic path which doesn't properly
-        // initialize ZP[0x5B], causing it to start at 0xF8 instead of 0x00
+        // With NMI disabled, the main game code should be able to run
+        // and eventually write to DVG GO (0x3000)
+        // Bit 7 = 0 (normal mode, NOT self-test)
         
         // Bit 1: 3 kHz clock - toggle based on CPU cycles
         clock_3khz = (total_cpu_cycles & 0x100) ? true : false;
@@ -514,6 +528,18 @@ uint8_t cpu6502_read_callback(uint16_t addr) {
         // MAME logic: if bit set, return 0x80, else return ~0x80 (0x7F)
         uint8_t result = bit_value ? 0x80 : 0x7F;
         
+        // DEBUG: Show IN0 reads, especially 0x2002 (DVG HALT) and 0x2007 (Self-Test)
+        static int read_2002_count = 0;
+        if (addr == 0x2002 && read_2002_count < 50) {
+            Serial.printf("*** IN0 READ 0x2002 [%d]: DVG halt=%d running=%d → bit2=%d → RETURN 0x%02X (PC=%04X)\n",
+                         read_2002_count++, dvg_state.halt, dvg_state.running, bit_value, result, cpu->GetPC());
+        }
+        
+        if (addr == 0x2007 && read_count < 20) {
+            Serial.printf("*** IN0[%d] READ 0x2007: in0=0x%02X, bit7=%d → RETURN 0x%02X (N=%d)\n",
+                         read_count++, in0, bit_value, result, (result & 0x80) ? 1 : 0);
+        }
+        
         if (debug) {
             Serial.printf("*** IN0[%d] addr=0x%04X: in0=0x%02X, bit=%d, result=0x%02X\n", 
                          read_count, addr, in0, bit_value, result);
@@ -530,6 +556,27 @@ uint8_t cpu6502_read_callback(uint16_t addr) {
         }
         
         uint8_t in1 = 0x00;
+        
+        // EXPERIMENTAL: Auto-insert coin and press start
+        // Simulate player inserting coin and pressing start button
+        // This should trigger the game to begin and write to DVG
+        static unsigned long game_start_time = 0;
+        if (game_start_time == 0) {
+            game_start_time = millis();
+        }
+        unsigned long game_runtime = millis() - game_start_time;
+        
+        // Insert coin after 2 seconds
+        if (game_runtime >= 2000 && game_runtime < 4000) {
+            in1 |= 0x01;  // Bit 0: Coin 1 PRESSED
+        }
+        
+        // Press START after 4 seconds
+        if (game_runtime >= 4000 && game_runtime < 6000) {
+            in1 |= 0x08;  // Bit 3: Start 1 PRESSED
+        }
+        
+        // Manual controls (after auto-start)
         if (buttons.coin)         in1 |= 0x01;  // Bit 0: Coin 1
         // Bit 1: Coin 2 (not implemented)
         // Bit 2: Coin 3 (not implemented)
@@ -576,12 +623,7 @@ uint8_t cpu6502_read_callback(uint16_t addr) {
         if (addr >= 0xF800) {
             uint16_t offset_in_last_2k = addr - 0xF800;  // 0x0000-0x07FF
             
-            // Debug: Log ALL vector area reads (0xF800-0xFFFF)
-            static int vector_area_reads = 0;
-            if (vector_area_reads < 20) {
-                Serial.printf("*** VECTOR AREA READ [%d]: addr=0x%04X -> PROM2[0x%04X] = 0x%02X\n",
-                             ++vector_area_reads, addr, offset_in_last_2k, asteroid_rom_prom2[offset_in_last_2k]);
-            }
+            // Debug: Vector area reads - DISABLED for performance
             
             return asteroid_rom_prom2[offset_in_last_2k];
         }
@@ -825,6 +867,21 @@ void dvg_add_point(int16_t x, int16_t y, uint8_t intensity) {
     if (dac_y < 0) dac_y = 0;
     if (dac_y > 4095) dac_y = 4095;
     
+    // CSV logging of actual DAC output (first 5000 points)
+    static int dac_log_count = 0;
+    static bool dac_csv_header = false;
+    
+    if (dac_log_count < 5000) {
+        if (!dac_csv_header) {
+            Serial.println("\n=== DVG OUTPUT (10-bit coords, 4-bit intensity) ===");
+            Serial.println("X,Y,Intensity");
+            dac_csv_header = true;
+        }
+        
+        Serial.printf("%d,%d,%d\n", x, y, intensity);
+        dac_log_count++;
+    }
+    
     vector_buffer.points[vector_buffer.count][0] = dac_x;
     vector_buffer.points[vector_buffer.count][1] = dac_y;
     vector_buffer.intensity[vector_buffer.count] = (intensity * 255) / 15;
@@ -1022,131 +1079,73 @@ void emulation_task(void *parameter) {
     // Remove this task from watchdog - it needs tight CPU timing
     disableCore0WDT();
     
-    unsigned long last_frame_time = micros();
-    unsigned long last_irq_time = 0;
-    unsigned long irq_start_time = 0;
-    bool irq_pending = false;
+    Serial.println("\n=== FRAME-BASED EMULATION (MAME Style) ===");
+    Serial.println("Running CPU at maximum speed");
+    Serial.println("NMI triggered every ~300 instructions (tunable)\n");
+    
+    // Frame-based emulation: Run as fast as possible
+    // Trigger NMI based on instruction count, not real time
+    // This matches how MAME works - it runs "full speed" and syncs to display
+    
+    const uint32_t INSTRUCTIONS_PER_NMI = 300;  // Tunable parameter
+    uint32_t instruction_count = 0;
+    
+    bool nmi_active = false;
+    uint32_t nmi_release_count = 0;
+    
+    uint64_t total_instructions = 0;
+    uint32_t nmi_count = 0;
+    unsigned long last_status_time = micros();
+    unsigned long start_time = micros();
+    
+    Serial.println("*** Frame-based emulation started ***\n");
     
     while (true) {
+        // Run CPU - single instruction for maximum control
+        uint64_t cycles = 0;
+        cpu->Run(1, cycles);
+        instruction_count++;
+        total_instructions++;
+        
+        // Check if we reached main game code (0x6800-0x6FFF)
+        uint16_t pc = cpu->GetPC();
+        static bool reached_game_code = false;
+        if (!reached_game_code && pc >= 0x6800 && pc < 0x7000) {
+            reached_game_code = true;
+            Serial.printf("\n*** REACHED MAIN GAME CODE! PC=0x%04X ***\n", pc);
+            Serial.printf("    After %llu instructions, %u NMIs\n\n", 
+                         total_instructions, nmi_count);
+        }
+        
+        // Trigger NMI every INSTRUCTIONS_PER_NMI instructions
+        if (!nmi_active && instruction_count >= INSTRUCTIONS_PER_NMI) {
+            cpu->NMI(false);  // Pull NMI line LOW (trigger)
+            nmi_active = true;
+            nmi_release_count = 0;
+            instruction_count = 0;
+            nmi_count++;
+        }
+        
+        // Release NMI after a few instructions (simulate edge trigger)
+        if (nmi_active) {
+            nmi_release_count++;
+            if (nmi_release_count >= 3) {
+                cpu->NMI(true);  // Pull NMI line HIGH (release)
+                nmi_active = false;
+            }
+        }
+        
+        // Status report every 2 seconds (real time)
         unsigned long now = micros();
-        
-        // NORMAL GAMEPLAY MODE: NMI enabled at 250Hz
-        // Generate 250Hz NMI pulse (4000µs = 250Hz)
-        if (now - last_irq_time >= 4000) {
-            last_irq_time = now;
+        if (now - last_status_time >= 2000000) {
+            unsigned long elapsed_ms = (now - start_time) / 1000;
+            float instructions_per_sec = total_instructions / (elapsed_ms / 1000.0);
             
-            // NMI is edge-triggered: HIGH->LOW transition
-            cpu->NMI(false);  // Pull LOW to trigger edge
-            irq_pending = true;
-            irq_start_time = now;
+            Serial.printf("*** Status: %llu instructions in %lu ms (%.0f inst/sec), %u NMIs, PC=0x%04X\n",
+                         total_instructions, elapsed_ms, instructions_per_sec, nmi_count, cpu->GetPC());
             
-            static int nmi_count = 0;
-            if (nmi_count++ < 5 || (nmi_count % 60) == 0) {
-                Serial.printf("*** NMI #%d edge, req=%d, inhibit=%d, line=%d\n", 
-                             nmi_count, 
-                             cpu->GetNMIRequest(), 
-                             cpu->GetNMIInhibit(),
-                             cpu->GetNMILine());
-            }
+            last_status_time = now;
         }
-        
-        // Release NMI line after 100µs
-        if (irq_pending && (now - irq_start_time >= 100)) {
-            cpu->NMI(true);  // Return to HIGH
-            irq_pending = false;
-        }
-        
-        // Run CPU - in self-test mode, no interrupts
-        uint64_t cycle_count = 0;
-        cpu->Run(100, cycle_count);  // Run 100 cycles
-        
-        // Check if we're stuck at BMI loop
-        static uint16_t last_bmi_pc = 0;
-        static int bmi_loop_count = 0;
-        uint16_t pc_check = cpu->GetPC();
-        
-        if (pc_check == 0x680F) {  // At BMI instruction
-            bmi_loop_count++;
-            if (bmi_loop_count < 10 || bmi_loop_count % 1000 == 0) {
-                uint8_t acc = cpu->GetA();
-                uint8_t status = cpu->GetP();
-                bool n_flag = (status & 0x80) ? true : false;
-                
-                Serial.printf("*** BMI LOOP [%d]: PC=0x%04X, A=0x%02X, P=0x%02X, N=%d\n",
-                             bmi_loop_count, pc_check, acc, status, n_flag ? 1 : 0);
-                             
-                if (bmi_loop_count == 10) {
-                    Serial.println("*** BMI loop detected - ROM stuck waiting! N flag should be 0 but isn't!");
-                }
-            }
-        }
-        
-        // OSCILLOSCOPE-STYLE DEBUG: Sample ZP[0x5B] occasionally
-        static unsigned long last_zp_sample = 0;
-        if (now - last_zp_sample >= 100000) {  // Every 100ms
-            last_zp_sample = now;
-            Serial.printf("*** ZP[0x5B]=0x%02X, PC=0x%04X, A=0x%02X, P=0x%02X\n",
-                         ram[0x5B], cpu->GetPC(), cpu->GetA(), cpu->GetP());
-        }
-        
-        static uint64_t total_cycles = 0;
-        static unsigned long last_cycle_report = 0;
-        static uint16_t last_pc = 0;
-        static int pc_change_count = 0;
-        static unsigned long last_pc_report = 0;
-        
-        total_cycles += cycle_count;
-        total_cpu_cycles += cycle_count;  // Update global counter for I/O reads
-        
-        // Track PC changes
-        uint16_t current_pc = cpu->GetPC();
-        if (current_pc != last_pc) {
-            pc_change_count++;
-            // Extended tracking - first 100 changes
-            if (pc_change_count <= 100) {
-                // Determine memory region
-                const char* region = "???";
-                if (current_pc < 0x1000) region = "RAM";
-                else if (current_pc >= 0x4000 && current_pc < 0x4800) region = "VRAM";
-                else if (current_pc >= 0x5000 && current_pc < 0x5800) region = "VROM";
-                else if (current_pc >= 0x6800) region = "ROM";
-                
-                // Only print every 5th change to reduce spam
-                if (pc_change_count % 5 == 0) {
-                    Serial.printf("*** PC [%d]: 0x%04X (%s)\n", 
-                                 pc_change_count, current_pc, region);
-                }
-            }
-            last_pc = current_pc;
-        }
-        
-        // Periodically report current PC location
-        if (now - last_pc_report >= 5000000) {  // Every 5 seconds
-            const char* region = "???";
-            if (current_pc < 0x1000) region = "RAM";
-            else if (current_pc >= 0x4000 && current_pc < 0x4800) region = "VRAM";
-            else if (current_pc >= 0x5000 && current_pc < 0x5800) region = "VROM";
-            else if (current_pc >= 0x6800) region = "ROM";
-            
-            Serial.printf("*** Status: PC=0x%04X (%s), Cycles/sec=~%.1fM\n", 
-                         current_pc, region, total_cycles / 5.0);
-            last_pc_report = now;
-        }
-        
-        if (now - last_cycle_report >= 1000000) {  // Every second
-            Serial.printf("*** CPU cycles/sec: %llu, PC: 0x%04X\n", total_cycles, current_pc);
-            total_cycles = 0;
-            last_cycle_report = now;
-        }
-        
-        // Process vector display at 60Hz
-        if (now - last_frame_time >= 16667) {
-            last_frame_time = now;
-            process_vector_list();
-        }
-        
-        // Yield frequently to prevent blocking other tasks
-        yield();
     }
 }
 
@@ -1217,6 +1216,9 @@ void setup() {
     
     // Check initial RAM state
     Serial.printf("*** Initial ZP[0x5B] = 0x%02X (should be 0x00 after reset)\n", ram[0x5B]);
+    Serial.printf("*** Initial RAM[0x72] = 0x%02X (wait counter at 0x7ACD loop)\n", ram[0x72]);
+    Serial.printf("*** Initial RAM[0x7A] = 0x%02X (used by 0x7A95 button code)\n", ram[0x7A]);
+    Serial.printf("*** Initial RAM[0x7C] = 0x%02X (used by 0x7A95 button code, X=2)\n", ram[0x7C]);
     
     // WORKAROUND: NMI handler at 0x7B71 waits for RAM[0x01FF] and RAM[0x01D0] to be 0x00
     // These are frame synchronization flags
@@ -1236,6 +1238,7 @@ void setup() {
     Serial.println("Continuing with test pattern only...\n");
 #else
     Serial.println("ROMs loaded successfully");
+    Serial.println("\n*** NMI configured as per MAME: 250 Hz, only when IN0 bit 7 = 0 ***\n");
 #endif
     
     // Start emulation on Core 0
