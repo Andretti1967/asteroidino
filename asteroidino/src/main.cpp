@@ -202,8 +202,8 @@ uint8_t dvg_state_addr() {
     // If OP3 is set, add opcode bits
     uint8_t addr = ((((dvg_state.state_latch >> 4) ^ 1) & 1) << 7) | (dvg_state.state_latch & 0x0f);
     
-    // ST3 check: bit 3 of state_latch
-    if (dvg_state.state_latch & 0x08) {
+    // OP3 check: bit 3 of OPCODE (not state_latch!)
+    if (dvg_state.op & 0x08) {
         addr |= ((dvg_state.op & 7) << 4);
     }
     
@@ -234,7 +234,12 @@ void dvg_update_databus() {
     } else {
         dvg_state.data = 0x00;
     }
+    // NOTE: MAME's update_databus() ONLY reads the byte into m_data
+    // It does NOT update Op or DVY - those are handled by Handler 4/5
 }
+
+// Forward declaration
+int dvg_handler_7();
 
 // DVG Handler 0: DMAPUSH (push to stack)
 int dvg_handler_0() {
@@ -250,9 +255,11 @@ int dvg_handler_0() {
 int dvg_handler_1() {
     uint8_t op0 = dvg_state.op & 1;
     if (op0) {
+        // RTSL - Return from subroutine
         dvg_state.pc = dvg_state.stack[dvg_state.stack_ptr & 3];
         dvg_state.stack_ptr = (dvg_state.stack_ptr - 1) & 0xf;
     } else {
+        // JSRL/JMPL - Jump to address in DVY (NO SHIFT - already word address!)
         dvg_state.pc = dvg_state.dvy;
     }
     return 0;
@@ -281,9 +288,11 @@ int dvg_handler_3() {
 // DVG Handler 4: LATCH0 (latch low byte)
 int dvg_handler_4() {
     dvg_state.dvy &= 0xf00;
-    if (dvg_state.op != 0xf) {
+    if (dvg_state.op == 0xf)
+        dvg_handler_7(); // Special case from MAME
+    else
         dvg_state.dvy = (dvg_state.dvy & 0xf00) | dvg_state.data;
-    }
+    
     dvg_state.pc++;
     return 0;
 }
@@ -336,9 +345,9 @@ void dvg_run_state_machine() {
         last_frame_debugged = dvg_frame_count;
     }
     
-    bool debug = (dvg_frame_count >= 7 && dvg_frame_count <= 100 && debug_count < 50);
+    bool debug = (dvg_frame_count == 12 && debug_count < 50); // Debug frame 12 (has E2 data)
     
-    if (dvg_frame_count >= 7 && dvg_frame_count <= 100 && debug_count == 0) {
+    if (dvg_frame_count == 12 && debug_count == 0) {
         Serial.printf("\n=== DVG PROM-BASED STATE MACHINE: Frame %d ===\n", dvg_frame_count);
     }
     
@@ -401,18 +410,20 @@ void dvg_run_state_machine() {
     
     dvg_state.running = false;
     
-    // CSV output for first 5000 DVG runs (10-bit DVG coordinates)
-    static int csv_count = 0;
-    static bool csv_header = false;
+    // CSV output ONLY for DVG GO #12 (frame with E2 data - correct JSRL)
+    extern int dvg_frame_count;
     
-    if (csv_count < 5000) {
-        if (!csv_header) {
-            Serial.println("\n=== DVG VECTOR OUTPUT (10-bit coords 0-1023, 4-bit intensity 0-15) ===");
-            Serial.println("X,Y,Intensity");
-            csv_header = true;
+    if (dvg_frame_count == 12) {
+        static bool header_printed = false;
+        if (!header_printed) {
+            Serial.println("\n========================================");
+            Serial.println("=== DVG GO #12: COMPLETE FRAME ===");
+            Serial.println("=== Format: X,Y,Intensity (10-bit coords 0-1023, 4-bit intensity 0-15) ===");
+            Serial.println("========================================");
+            header_printed = true;
         }
         
-        // Output all vectors - convert from 12-bit DAC (0-4095) back to 10-bit DVG (0-1023)
+        // Output ALL vectors from this frame
         for (int i = 0; i < vector_buffer.count; i++) {
             int dvg_x = (vector_buffer.points[i][0] * 1023) / 4095;
             int dvg_y = (vector_buffer.points[i][1] * 1023) / 4095;
@@ -420,7 +431,10 @@ void dvg_run_state_machine() {
             
             Serial.printf("%d,%d,%d\n", dvg_x, dvg_y, intensity);
         }
-        csv_count++;
+        
+        Serial.println("========================================");
+        Serial.printf("=== TOTAL VECTORS: %d ===\n", vector_buffer.count);
+        Serial.println("========================================");
     }
     
     // Show summary (first 10 only to reduce spam)
@@ -889,11 +903,33 @@ void dvg_add_point(int16_t x, int16_t y, uint8_t intensity) {
 }
 
 uint16_t dvg_read_word(uint16_t addr) {
-    // Vector RAM is at 0x4000-0x47FF (2KB)
-    if (addr >= 0x7FF) return 0;
+    // DVG has its own address space:
+    // 0x000-0x7FF: Vector RAM (CPU address 0x4000-0x47FF)
+    // 0x800-0xFFF: Vector ROM (CPU address 0x5000-0x57FF)
+    
+    uint8_t lo, hi;
+    
+    if (addr < 0x800) {
+        // Vector RAM
+        if (addr >= 0x7FF) return 0;  // Safety check
+        lo = vector_ram[addr];
+        hi = vector_ram[addr + 1];
+    } else {
+        // Vector ROM - map DVG address to CPU address space
+        uint16_t rom_addr = addr - 0x800;  // 0x800 -> 0x000 in ROM
+        if (rom_addr >= 0x7FF) return 0;   // Safety check
+        
+        static bool first_rom_read = true;
+        if (first_rom_read) {
+            first_rom_read = false;
+            Serial.printf("*** First Vector ROM read! DVG addr=0x%04X, ROM offset=0x%04X\n", addr, rom_addr);
+        }
+        
+        lo = asteroid_rom_vector[rom_addr];
+        hi = asteroid_rom_vector[rom_addr + 1];
+    }
+    
     // Words are stored little-endian
-    uint16_t lo = vector_ram[addr];
-    uint16_t hi = vector_ram[addr + 1];
     return (hi << 8) | lo;
 }
 
@@ -915,12 +951,24 @@ void dvg_execute() {
     // DVG starts at address 0 in vector RAM
     int max_ops = 10000;  // Safety limit
     
+    static int debug_op_count = 0;
+    int ops_this_frame = 0;
+    
     while (!dvg_state.halt && max_ops-- > 0) {
         uint16_t opcode = dvg_read_word(dvg_state.pc);
+        uint16_t pc_before = dvg_state.pc;
         dvg_state.pc += 2;
         
         // Decode opcode (see MAME avgdvg.cpp for reference)
         uint8_t op = (opcode >> 12) & 0x0F;
+        
+        // Debug first 20 opcodes
+        if (debug_op_count < 20) {
+            Serial.printf("DVG[%d]: PC=0x%04X Op=0x%X Opcode=0x%04X\n", 
+                debug_op_count, pc_before, op, opcode);
+            debug_op_count++;
+        }
+        ops_this_frame++;
         
         switch (op) {
             case 0x0: // VCTR - Draw vector
@@ -978,15 +1026,30 @@ void dvg_execute() {
                 break;
             }
             
-            case 0xA: // HALT
-                dvg_state.halt = true;
+            case 0xA: // JSRL - Jump to subroutine
+                {
+                    static int jsrl_count = 0;
+                    uint16_t target = (opcode & 0x0FFF);
+                    if (jsrl_count < 5) {
+                        Serial.printf("*** JSRL[%d]: PC=0x%04X → 0x%04X (opcode=0x%04X)\n", 
+                            jsrl_count++, pc_before, target, opcode);
+                    }
+                    if (dvg_state.stack_ptr < 4) {
+                        dvg_state.stack[dvg_state.stack_ptr++] = dvg_state.pc;
+                    }
+                    dvg_state.pc = target;
+                }
                 break;
             
-            case 0xB: // JSRL - Jump to subroutine
-                if (dvg_state.stack_ptr < 4) {
-                    dvg_state.stack[dvg_state.stack_ptr++] = dvg_state.pc;
+            case 0xB: // HALT
+                {
+                    static int halt_count = 0;
+                    if (halt_count < 5) {
+                        Serial.printf("*** HALT[%d]: PC=0x%04X opcode=0x%04X\n", 
+                            halt_count++, pc_before, opcode);
+                    }
+                    dvg_state.halt = true;
                 }
-                dvg_state.pc = (opcode & 0x0FFF) << 1;
                 break;
             
             case 0xC: // RTSL - Return from subroutine
@@ -998,7 +1061,8 @@ void dvg_execute() {
                 break;
             
             case 0xD: // JMPL - Jump
-                dvg_state.pc = (opcode & 0x0FFF) << 1;
+                // Extract 12-bit address - NO shift needed
+                dvg_state.pc = (opcode & 0x0FFF);
                 break;
             
             case 0xE: // SVEC - Short vector
