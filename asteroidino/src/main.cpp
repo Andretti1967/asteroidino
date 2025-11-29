@@ -217,7 +217,7 @@ void dvg_update_databus() {
     uint16_t byte_addr = (dvg_addr << 1) + (dvg_state.state_latch & 1);
     
     if (dvg_addr < 0x400) {
-        // Read from Vector RAM
+    
         if (byte_addr < 2048) {
             dvg_state.data = vector_ram[byte_addr];
         } else {
@@ -437,11 +437,12 @@ void dvg_run_state_machine() {
         Serial.println("========================================");
     }
     
-    // Show summary (first 10 only to reduce spam)
+    // Show summary (first 100 only to reduce spam)
     static int summary_count = 0;
-    if (summary_count++ < 10) {
-        Serial.printf("*** DVG finished: vectors=%d, halt=%d, PC=0x%04X\n", 
-                     vector_buffer.count, dvg_state.halt, dvg_state.pc);
+    if (summary_count++ < 100) {
+        // Include the DVG frame counter so logs can be correlated to frames
+        Serial.printf("*** DVG finished: frame=%d, vectors=%d, halt=%d, PC=0x%04X\n",
+                      dvg_frame_count, vector_buffer.count, dvg_state.halt, dvg_state.pc);
     }
 }// ============================================================================
 // MEMORY ACCESS (called by CPU emulator)
@@ -725,19 +726,13 @@ void cpu6502_write_callback(uint16_t addr, uint8_t value) {
         Serial.printf("\n*** DVG GO [%d] WRITE! ***\n", go_count);
         Serial.printf("    PC=0x%04X, value=0x%02X\n", cpu->GetPC(), value);
         
-        // Show first 64 bytes of Vector RAM
-        if (go_count <= 2) {
-            Serial.printf("    VRAM DUMP (first 64 bytes):\n");
-            for (int i = 0; i < 64; i += 8) {
-                Serial.printf("    %04X: %02X %02X %02X %02X  %02X %02X %02X %02X\n", 
-                             i,
-                             vector_ram[i], vector_ram[i+1], vector_ram[i+2], vector_ram[i+3],
-                             vector_ram[i+4], vector_ram[i+5], vector_ram[i+6], vector_ram[i+7]);
-            }
-        } else {
-            Serial.printf("    VRAM[0..7]: %02X %02X %02X %02X  %02X %02X %02X %02X\n",
-                         vector_ram[0], vector_ram[1], vector_ram[2], vector_ram[3],
-                         vector_ram[4], vector_ram[5], vector_ram[6], vector_ram[7]);
+        // Always show first 64 bytes of Vector RAM for debugging
+        Serial.printf("    VRAM DUMP (first 64 bytes):\n");
+        for (int i = 0; i < 64; i += 8) {
+            Serial.printf("    %04X: %02X %02X %02X %02X  %02X %02X %02X %02X\n", 
+                         i,
+                         vector_ram[i], vector_ram[i+1], vector_ram[i+2], vector_ram[i+3],
+                         vector_ram[i+4], vector_ram[i+5], vector_ram[i+6], vector_ram[i+7]);
         }
         
         // Start DVG processing from address in 'value'
@@ -1145,13 +1140,13 @@ void emulation_task(void *parameter) {
     
     Serial.println("\n=== FRAME-BASED EMULATION (MAME Style) ===");
     Serial.println("Running CPU at maximum speed");
-    Serial.println("NMI triggered every ~300 instructions (tunable)\n");
+    Serial.printf("NMI triggered every %d instructions (configurable: INSTRUCTIONS_PER_NMI)\n\n", INSTRUCTIONS_PER_NMI);
     
     // Frame-based emulation: Run as fast as possible
     // Trigger NMI based on instruction count, not real time
     // This matches how MAME works - it runs "full speed" and syncs to display
     
-    const uint32_t INSTRUCTIONS_PER_NMI = 300;  // Tunable parameter
+    // Use configuration macro from config.h
     uint32_t instruction_count = 0;
     
     bool nmi_active = false;
@@ -1341,15 +1336,23 @@ void loop() {
         static int frame_number = 0;
         static bool csv_header_printed = false;
         
-        // CSV OUTPUT: First 100 frames
-        if (frame_number < 100) {
+        // CSV OUTPUT: only for selected frames (whitelist)
+        // This avoids noisy interleaved CSV lines for all frames.
+        const int csv_whitelist[] = {1, 20, 100};
+        const int csv_whitelist_len = sizeof(csv_whitelist) / sizeof(csv_whitelist[0]);
+        bool csv_want = false;
+        for (int wi = 0; wi < csv_whitelist_len; ++wi) {
+            if (frame_number == csv_whitelist[wi]) { csv_want = true; break; }
+        }
+
+        if (csv_want) {
             // Print CSV header once
             if (!csv_header_printed) {
                 Serial.println("\n=== ASTEROIDS VECTOR DATA CSV ===");
                 Serial.println("Frame,VectorCount,Index,X,Y,Z");
                 csv_header_printed = true;
             }
-            
+
             // Output all vectors in this frame
             for (int i = 0; i < vector_buffer.count; i++) {
                 Serial.printf("%d,%d,%d,%d,%d,%d\n",
@@ -1360,8 +1363,10 @@ void loop() {
                     vector_buffer.points[i][1],
                     vector_buffer.intensity[i]);
             }
-            frame_number++;
         }
+
+        // Always advance the frame counter (keeps numbering correct even if CSV is off)
+        frame_number++;
         
         // OLD DEBUG CODE (kept for reference)
         /*
