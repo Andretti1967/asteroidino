@@ -70,6 +70,18 @@
 // Aber wir brauchen auch Zeit für Display + Audio, also konservativ:
 #define CPU_CYCLES_PER_FRAME  20000
 
+// Number of 6502 instructions between NMI pulses.
+// This is used to approximate the original hardware NMI frequency (250 Hz).
+// Set to 218 based on measured instructions/sec on target hardware.
+#define INSTRUCTIONS_PER_NMI  218
+
+// DVG implementation toggle
+//  - 0 : Use PROM-driven state machine (default, closer to MAME/hardware)
+//  - 1 : Use flat interpreter `dvg_execute()` (simpler, useful for debugging)
+#ifndef DVG_USE_INTERPRETER
+#define DVG_USE_INTERPRETER 1
+#endif
+
 // Memory map (vereinfacht)
 #define MEM_SIZE_RAM     0x1000   // 4 KB RAM (0x0000-0x0FFF)
 #define MEM_SIZE_VECTOR  0x800    // 2 KB Vector RAM (0x4000-0x47FF)
