@@ -79,7 +79,7 @@
 //  - 0 : Use PROM-driven state machine (default, closer to MAME/hardware)
 //  - 1 : Use flat interpreter `dvg_execute()` (simpler, useful for debugging)
 #ifndef DVG_USE_INTERPRETER
-#define DVG_USE_INTERPRETER 1
+#define DVG_USE_INTERPRETER 0
 #endif
 
 // Memory map (vereinfacht)
@@ -93,7 +93,7 @@
 
 // Uncomment für Debug-Ausgaben über Serial
 // #define DEBUG_SERIAL
-// #define DEBUG_VECTOR     // Vector-Dekodierung loggen
+#define DEBUG_VECTOR     // Vector-Dekodierung loggen
 // #define DEBUG_CPU        // 6502 Instructions loggen (LANGSAM!)
 // #define DEBUG_AUDIO      // Audio-Buffer-Status
 

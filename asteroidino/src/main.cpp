@@ -42,6 +42,9 @@ struct {
     int      count;
 } vector_buffer;
 
+// One-time per-frame warning when the vector buffer saturates
+bool vector_buffer_full_warned = false;
+
 // DVG frame counter for debugging
 int dvg_frame_count = 0;
 
@@ -131,17 +134,16 @@ uint64_t total_cpu_cycles = 0;
  */
 
 void dvg_add_vector(int16_t dx, int16_t dy, uint8_t intensity) {
-    // Debug logging (first 20 calls)
-    static int debug_calls = 0;
-    if (debug_calls < 20) {
-        Serial.printf("DVG_ADD_VECTOR[%d]: dx=%d, dy=%d, I=%d, state.x=%d, state.y=%d\n",
-            debug_calls++, dx, dy, intensity, dvg_state.x, dvg_state.y);
-    }
-    
     if (vector_buffer.count >= VECT_POINTS_PER_FRAME) {
+        // One-time warning per frame to highlight saturation
+        if (!vector_buffer_full_warned) {
+            Serial.printf("*** WARNING: vector buffer saturated at frame=%d (max=%d) - further vectors suppressed\n",
+                          dvg_frame_count, VECT_POINTS_PER_FRAME);
+            vector_buffer_full_warned = true;
+        }
         return;  // Buffer full
     }
-    
+
     // Add starting point if this is the first vector
     if (vector_buffer.count == 0) {
         vector_buffer.points[0][0] = dvg_state.x;
@@ -149,84 +151,59 @@ void dvg_add_vector(int16_t dx, int16_t dy, uint8_t intensity) {
         vector_buffer.intensity[0] = 0;  // Starting point has no intensity
         vector_buffer.count = 1;
     }
-    
-    // Update position
+
+    // Update position and clamp
     dvg_state.x += dx;
     dvg_state.y += dy;
-    
-    // Clip to screen bounds (0-1023)
     if (dvg_state.x < 0) dvg_state.x = 0;
     if (dvg_state.x > 1023) dvg_state.x = 1023;
     if (dvg_state.y < 0) dvg_state.y = 0;
     if (dvg_state.y > 1023) dvg_state.y = 1023;
-    
+
     // Add endpoint
     vector_buffer.points[vector_buffer.count][0] = dvg_state.x;
     vector_buffer.points[vector_buffer.count][1] = dvg_state.y;
     vector_buffer.intensity[vector_buffer.count] = intensity;
     vector_buffer.count++;
-    
-    // CSV logging of DVG vector output (first 5000 vectors)
-    static int vec_log_count = 0;
-    static bool vec_csv_header = false;
-    
-    if (vec_log_count < 5000) {
-        if (!vec_csv_header) {
-            Serial.println("\n=== DVG VECTOR OUTPUT (10-bit coords, 4-bit intensity) ===");
-            Serial.println("X,Y,Intensity");
-            vec_csv_header = true;
-        }
-        
-        Serial.printf("%d,%d,%d\n", dvg_state.x, dvg_state.y, intensity);
-        vec_log_count++;
-    }
 }
 
 void dvg_process_vector() {
     // VCTR: Draw vector
-    // Scale determines step size: 2^(scale+1) steps
-    int scale_val = (2 << dvg_state.scale) & 0x7ff;
-    
+    // Scale determines step size (approx): use shift-based approximation
+    int scale_val = (2 << dvg_state.scale) & 0x7FF;
+
     // Convert 12-bit signed values to actual deltas
     int16_t dx = (dvg_state.dvx & 0x400) ? (dvg_state.dvx | 0xF800) : (dvg_state.dvx & 0x3FF);
     int16_t dy = (dvg_state.dvy & 0x400) ? (dvg_state.dvy | 0xF800) : (dvg_state.dvy & 0x3FF);
-    
-    // Scale the deltas
+
+    // Scale the deltas (approximation)
     dx = (dx * scale_val) >> 8;
     dy = (dy * scale_val) >> 8;
-    
+
     dvg_add_vector(dx, dy, dvg_state.intensity);
 }
 
 // Helper: Calculate PROM address from state_latch, opcode, and halt
 uint8_t dvg_state_addr() {
-    // MAME: addr = ((((state_latch >> 4) ^ 1) & 1) << 7) | (state_latch & 0xf)
-    // If OP3 is set, add opcode bits
     uint8_t addr = ((((dvg_state.state_latch >> 4) ^ 1) & 1) << 7) | (dvg_state.state_latch & 0x0f);
-    
-    // OP3 check: bit 3 of OPCODE (not state_latch!)
     if (dvg_state.op & 0x08) {
         addr |= ((dvg_state.op & 7) << 4);
     }
-    
     return addr;
 }
 
-// Helper: Update data bus (read word from Vector RAM/ROM)
+// Helper: Update data bus (read byte from Vector RAM/ROM into dvg_state.data)
 void dvg_update_databus() {
-    // DVG uses low bit of state for address (byte selection)
     uint16_t dvg_addr = dvg_state.pc;
     uint16_t byte_addr = (dvg_addr << 1) + (dvg_state.state_latch & 1);
-    
+
     if (dvg_addr < 0x400) {
-    
         if (byte_addr < 2048) {
             dvg_state.data = vector_ram[byte_addr];
         } else {
             dvg_state.data = 0x00;
         }
     } else if (dvg_addr < 0x800) {
-        // Read from Vector ROM
         uint16_t rom_offset = (dvg_addr - 0x400) * 2 + (dvg_state.state_latch & 1);
         if (rom_offset < 2048) {
             dvg_state.data = pgm_read_byte(&asteroid_rom_vector[rom_offset]);
@@ -236,11 +213,16 @@ void dvg_update_databus() {
     } else {
         dvg_state.data = 0x00;
     }
-    // NOTE: MAME's update_databus() ONLY reads the byte into m_data
-    // It does NOT update Op or DVY - those are handled by Handler 4/5
 }
 
-// Forward declaration
+// Forward declarations for handlers and interpreter
+int dvg_handler_0();
+int dvg_handler_1();
+int dvg_handler_2();
+int dvg_handler_3();
+int dvg_handler_4();
+int dvg_handler_5();
+int dvg_handler_6();
 int dvg_handler_7();
 void dvg_execute();
 
@@ -262,7 +244,7 @@ int dvg_handler_1() {
         dvg_state.pc = dvg_state.stack[dvg_state.stack_ptr & 3];
         dvg_state.stack_ptr = (dvg_state.stack_ptr - 1) & 0xf;
     } else {
-        // JSRL/JMPL - Jump to address in DVY (NO SHIFT - already word address!)
+        // JSRL/JMPL - Jump to address in DVY (word address)
         dvg_state.pc = dvg_state.dvy;
     }
     return 0;
@@ -270,7 +252,6 @@ int dvg_handler_1() {
 
 // DVG Handler 2: GOSTROBE (draw vector)
 int dvg_handler_2() {
-    // This draws the actual vector - simplified for now
     dvg_process_vector();
     return 0;
 }
@@ -279,12 +260,19 @@ int dvg_handler_2() {
 int dvg_handler_3() {
     uint8_t op0 = dvg_state.op & 1;
     dvg_state.halt = !op0;
-    
     if (!op0) {
         dvg_state.xpos = dvg_state.dvx & 0xfff;
         dvg_state.ypos = dvg_state.dvy & 0xfff;
-        dvg_add_vector(0, 0, 0);  // Draw to final position
+        dvg_add_vector(0, 0, 0);
     }
+#ifdef DEBUG_VECTOR
+    static int haltstrobe_count = 0;
+    if (haltstrobe_count < 20) {
+        Serial.printf("*** HALTSTROBE [%d]: PC=0x%03X op0=%d -> halt=%d\n",
+                      haltstrobe_count, dvg_state.pc, op0, dvg_state.halt ? 1 : 0);
+        haltstrobe_count++;
+    }
+#endif
     return 0;
 }
 
@@ -295,7 +283,7 @@ int dvg_handler_4() {
         dvg_handler_7(); // Special case from MAME
     else
         dvg_state.dvy = (dvg_state.dvy & 0xf00) | dvg_state.data;
-    
+
     dvg_state.pc++;
     return 0;
 }
@@ -347,16 +335,33 @@ void dvg_run_state_machine() {
         debug_count = 0;
         last_frame_debugged = dvg_frame_count;
     }
-    
+
+#ifdef DEBUG_VECTOR
+    // When DEBUG_VECTOR is enabled, turn on per-step PROM/state debug prints
+    bool debug = true;
+    if (debug_count == 0) {
+        Serial.printf("\n=== DVG PROM-BASED STATE MACHINE: Frame %d (DEBUG_VECTOR active) ===\n", dvg_frame_count);
+    }
+#else
     bool debug = (dvg_frame_count == 12 && debug_count < 50); // Debug frame 12 (has E2 data)
-    
     if (dvg_frame_count == 12 && debug_count == 0) {
         Serial.printf("\n=== DVG PROM-BASED STATE MACHINE: Frame %d ===\n", dvg_frame_count);
     }
+#endif
     
     dvg_state.halt = false;
     int max_iterations = 1000;
     int cycles = 0;
+    // Track whether the state machine exited normally or due to limits
+    bool exited_due_to_limit = false;
+
+    // Ring buffer to capture recent PROM/state activity for post-mortem
+    const int DBG_BUF_SZ = 64;
+    static uint8_t dbg_prom_addr[DBG_BUF_SZ];
+    static uint8_t dbg_prom_data[DBG_BUF_SZ];
+    static uint16_t dbg_pc[DBG_BUF_SZ];
+    static uint8_t dbg_latch[DBG_BUF_SZ];
+    int dbg_idx = 0;
     
     if (debug) {
         Serial.printf("DVG State Machine Start: PC=0x%03X, state_latch=0x%02X\n",
@@ -383,6 +388,13 @@ void dvg_run_state_machine() {
         if (dvg_state.state_latch & 0x08) {
             dvg_update_databus();
             
+            // store recent PROM/state for debugging
+            dbg_prom_addr[dbg_idx] = prom_addr;
+            dbg_prom_data[dbg_idx] = prom_data;
+            dbg_pc[dbg_idx] = dvg_state.pc;
+            dbg_latch[dbg_idx] = dvg_state.state_latch;
+            dbg_idx = (dbg_idx + 1) & (DBG_BUF_SZ - 1);
+
             uint8_t handler = dvg_state.state_latch & 0x07;
             if (debug && debug_count < 50) {
                 Serial.printf("  Handler %d: PC:%03X Op:%X Data:%02X\n", 
@@ -412,6 +424,30 @@ void dvg_run_state_machine() {
     if (debug_count < 10) debug_count++;
     
     dvg_state.running = false;
+
+    // If we exited without HALT, warn — likely ran until vector buffer filled or loop limit
+    if (!dvg_state.halt) {
+        bool exited_on_iter_limit = (max_iterations <= 0);
+        bool exited_on_cycle_limit = (cycles >= 10000);
+        Serial.printf("*** DVG WARNING: state machine exited without HALT (frame=%d, cycles=%d)\n",
+                      dvg_frame_count, cycles);
+        if (exited_on_iter_limit) Serial.printf("*** DVG: exited due to iteration limit (max_iterations reached)\n");
+        if (exited_on_cycle_limit) Serial.printf("*** DVG: exited due to cycle limit (cycles >= 10000)\n");
+
+        // Print last N PROM/state entries for diagnosis (rate-limited under debug)
+#ifdef DEBUG_VECTOR
+        int to_print = min(16, DBG_BUF_SZ);
+        Serial.println("*** DVG: last PROM/state entries (oldest→newest):");
+        int start = (dbg_idx - to_print + DBG_BUF_SZ) & (DBG_BUF_SZ - 1);
+        for (int i = 0; i < to_print; i++) {
+            int j = (start + i) & (DBG_BUF_SZ - 1);
+            Serial.printf("  [%2d] PROM_ADDR=0x%02X PROM_DATA=0x%02X PC=0x%03X LATCH=0x%02X\n",
+                          i, dbg_prom_addr[j], dbg_prom_data[j], dbg_pc[j], dbg_latch[j]);
+        }
+#else
+        Serial.println("*** DVG: enable DEBUG_VECTOR for PROM/state trace (gated, limited).\n");
+#endif
+    }
     
     // CSV output ONLY for DVG GO #12 (frame with E2 data - correct JSRL)
     extern int dvg_frame_count;
@@ -439,6 +475,108 @@ void dvg_run_state_machine() {
         Serial.printf("=== TOTAL VECTORS: %d ===\n", vector_buffer.count);
         Serial.println("========================================");
     }
+
+    // Extra: detailed VRAM/opcode dump for frame 8 (useful if VRAM now valid)
+#ifdef DEBUG_VECTOR
+    if (dvg_frame_count == 8) {
+        Serial.println("\n========================================");
+        Serial.println("=== DVG GO #8: VRAM / Opcode Dump ===");
+        Serial.println("=== Format: WordIdx Addr Low High Word OpNib Data12 ===");
+        Serial.println("========================================");
+
+        const int words_to_show = 128; // 128 words = 256 bytes
+        int w = 0;
+        while (w < words_to_show) {
+            int byte_idx = w * 2;
+            if (byte_idx + 1 >= MEM_SIZE_VECTOR) break;
+            uint8_t low = vector_ram[byte_idx];
+            uint8_t high = vector_ram[byte_idx + 1];
+            uint16_t word = (uint16_t)low | ((uint16_t)high << 8);
+
+            // Try to classify the word
+            if (word == 0x2000) {
+                Serial.printf("%04d 0x%04X %02X %02X 0x%04X  HALT\n", w, 0x4000 + byte_idx, low, high, word);
+                w++;
+                continue;
+            }
+
+            uint16_t top = word & 0xF000;
+            if ((top & 0xF000) == 0x2000) {
+                // LABS: Y absolute in this word, next word is X
+                if (byte_idx + 3 < MEM_SIZE_VECTOR) {
+                    uint8_t low2 = vector_ram[byte_idx + 2];
+                    uint8_t high2 = vector_ram[byte_idx + 3];
+                    uint16_t word2 = (uint16_t)low2 | ((uint16_t)high2 << 8);
+                    uint16_t y = word & 0x0FFF;
+                    uint16_t x = word2 & 0x0FFF;
+                    Serial.printf("%04d 0x%04X %02X %02X 0x%04X  LABS Y=%d X=%d\n",
+                                  w, 0x4000 + byte_idx, low, high, word, y, x);
+                    w += 2;
+                    continue;
+                }
+            }
+
+            if ((top & 0xF000) == 0x4000) {
+                uint16_t addr = word & 0x0FFF;
+                Serial.printf("%04d 0x%04X %02X %02X 0x%04X  JSRL 0x%03X\n",
+                              w, 0x4000 + byte_idx, low, high, word, addr);
+                w++;
+                continue;
+            }
+
+            if ((top & 0xF000) == 0x5000) {
+                Serial.printf("%04d 0x%04X %02X %02X 0x%04X  RTSL\n",
+                              w, 0x4000 + byte_idx, low, high, word);
+                w++;
+                continue;
+            }
+
+            if ((top & 0xF000) == 0x6000) {
+                uint16_t addr = word & 0x0FFF;
+                Serial.printf("%04d 0x%04X %02X %02X 0x%04X  JMPL 0x%03X\n",
+                              w, 0x4000 + byte_idx, low, high, word, addr);
+                w++;
+                continue;
+            }
+
+            if ((word & 0xE000) == 0xE000) {
+                // Short vector (SVEC) - print raw fields
+                uint8_t scale = word & 0x0007;
+                Serial.printf("%04d 0x%04X %02X %02X 0x%04X  SVEC scale=%d\n",
+                              w, 0x4000 + byte_idx, low, high, word, scale);
+                w++;
+                continue;
+            }
+
+            // Heuristic: VCTR uses two words: Y+scale then X+intensity
+            if (byte_idx + 3 < MEM_SIZE_VECTOR) {
+                uint8_t low2 = vector_ram[byte_idx + 2];
+                uint8_t high2 = vector_ram[byte_idx + 3];
+                uint16_t word2 = (uint16_t)low2 | ((uint16_t)high2 << 8);
+
+                // Decode y (12-bit) from word >>4, scale = word & 0xF
+                uint16_t y12 = (word >> 4) & 0x0FFF;
+                int16_t y = (y12 & 0x0800) ? (int16_t)(y12 | 0xF000) : (int16_t)y12;
+                uint8_t scale = word & 0x000F;
+
+                uint16_t x12 = (word2 >> 4) & 0x0FFF;
+                int16_t x = (x12 & 0x0800) ? (int16_t)(x12 | 0xF000) : (int16_t)x12;
+                uint8_t intensity = word2 & 0x000F;
+
+                Serial.printf("%04d 0x%04X %02X %02X 0x%04X  VCTR dy=%d scale=%d  next:0x%04X dx=%d inten=%d\n",
+                              w, 0x4000 + byte_idx, low, high, word, y, scale, word2, x, intensity);
+                w += 2;
+                continue;
+            }
+
+            // Fallback: print raw
+            Serial.printf("%04d 0x%04X %02X %02X 0x%04X  RAW\n",
+                          w, 0x4000 + byte_idx, low, high, word);
+            w++;
+        }
+        Serial.println("========================================\n");
+    }
+#endif
     
     // Show summary (first 100 only to reduce spam)
     static int summary_count = 0;
@@ -548,9 +686,34 @@ uint8_t cpu6502_read_callback(uint16_t addr) {
         
         // DEBUG: Show IN0 reads, especially 0x2002 (DVG HALT) and 0x2007 (Self-Test)
         static int read_2002_count = 0;
-        if (addr == 0x2002 && read_2002_count < 50) {
-            Serial.printf("*** IN0 READ 0x2002 [%d]: DVG halt=%d running=%d → bit2=%d → RETURN 0x%02X (PC=%04X)\n",
-                         read_2002_count++, dvg_state.halt, dvg_state.running, bit_value, result, cpu->GetPC());
+        static int last_reported_frame = -1;
+        if (addr == 0x2002) {
+            if (read_2002_count < 50) {
+                Serial.printf("*** IN0 READ 0x2002 [%d]: DVG halt=%d running=%d → bit2=%d → RETURN 0x%02X (PC=%04X)\n",
+                             read_2002_count++, dvg_state.halt, dvg_state.running, bit_value, result, cpu->GetPC());
+            }
+
+            // If DVG is finished (halt==true) and we haven't reported this frame yet,
+            // print the centralized DVG finished summary and the generated vectors.
+            if (dvg_state.halt && last_reported_frame != dvg_frame_count) {
+                last_reported_frame = dvg_frame_count;
+                Serial.printf("DVG finished: frame=%d, vectors=%d, halt=%d, PC=0x%04X\n",
+                              dvg_frame_count, vector_buffer.count, dvg_state.halt ? 1 : 0, dvg_state.pc);
+
+                // Output generated vectors as CSV: X,Y,Intensity (10-bit coords, 0-1023; intensity 0-15)
+                Serial.println("X,Y,Intensity");
+                for (int i = 0; i < vector_buffer.count; i++) {
+                    int px = vector_buffer.points[i][0];
+                    int py = vector_buffer.points[i][1];
+                    int pz = vector_buffer.intensity[i];
+
+                    int dvg_x = (px > 1023) ? (px * 1023) / 4095 : px;
+                    int dvg_y = (py > 1023) ? (py * 1023) / 4095 : py;
+                    int intensity = (pz > 15) ? (pz * 15) / 255 : pz;
+
+                    Serial.printf("%d,%d,%d\n", dvg_x, dvg_y, intensity);
+                }
+            }
         }
         
         if (addr == 0x2007 && read_count < 20) {
@@ -698,9 +861,16 @@ void cpu6502_write_callback(uint16_t addr, uint8_t value) {
     // Vector RAM: 0x4000-0x47FF
     if (addr >= 0x4000 && addr < 0x4800) {
         static int write_count = 0;
-        if (write_count++ < 100) {  // Show first 100 writes instead of 10
+        // Only log Vector RAM writes when DEBUG_VECTOR is enabled in `src/config.h`.
+        // This keeps runtime logs small during normal operation.
+#ifdef DEBUG_VECTOR
+        if (++write_count <= 100) {  // Show first 100 writes when enabled
             Serial.printf("*** Vector RAM write [%d]: 0x%04X = 0x%02X\n", write_count, addr, value);
         }
+#else
+        // Still increment the counter for potential future use, but don't print.
+        write_count++;
+#endif
         vector_ram[addr - 0x4000] = value;
         return;
     }
@@ -728,18 +898,25 @@ void cpu6502_write_callback(uint16_t addr, uint8_t value) {
         // ALWAYS show DVG GO with more context
         Serial.printf("\n*** DVG GO [%d] WRITE! ***\n", go_count);
         Serial.printf("    PC=0x%04X, value=0x%02X\n", cpu->GetPC(), value);
-        
-        // Always show first 64 bytes of Vector RAM for debugging
-        Serial.printf("    VRAM DUMP (first 64 bytes):\n");
+
+        // VRAM DUMP: 64 bytes at 0x4000 and 64 bytes at 0x4400
+        Serial.printf("    VRAM DUMP @ 0x4000 (64 bytes):\n");
         for (int i = 0; i < 64; i += 8) {
-            Serial.printf("    %04X: %02X %02X %02X %02X  %02X %02X %02X %02X\n", 
-                         i,
-                         vector_ram[i], vector_ram[i+1], vector_ram[i+2], vector_ram[i+3],
-                         vector_ram[i+4], vector_ram[i+5], vector_ram[i+6], vector_ram[i+7]);
+            Serial.printf("    %04X: %02X %02X %02X %02X  %02X %02X %02X %02X\n",
+                          0x4000 + i,
+                          vector_ram[i], vector_ram[i+1], vector_ram[i+2], vector_ram[i+3],
+                          vector_ram[i+4], vector_ram[i+5], vector_ram[i+6], vector_ram[i+7]);
         }
-        
-        // Start DVG processing from address in 'value'
-        // In Asteroids, the value written is typically 0x00 (start from beginning)
+
+        Serial.printf("    VRAM DUMP @ 0x4400 (64 bytes):\n");
+        for (int i = 0x400; i < 0x400 + 64; i += 8) {
+            Serial.printf("    %04X: %02X %02X %02X %02X  %02X %02X %02X %02X\n",
+                          0x4000 + i,
+                          vector_ram[i], vector_ram[i+1], vector_ram[i+2], vector_ram[i+3],
+                          vector_ram[i+4], vector_ram[i+5], vector_ram[i+6], vector_ram[i+7]);
+        }
+
+        // Initialize DVG state from the write
         dvg_state.pc = (value & 0x0F) << 8;  // Only low 4 bits used as high address bits
         dvg_state.running = true;
         dvg_state.halt = false;
@@ -749,17 +926,38 @@ void cpu6502_write_callback(uint16_t addr, uint8_t value) {
         dvg_state.data = 0;
         dvg_state.dvx = 0;
         dvg_state.dvy = 0;
-        
+
         // Clear previous vector buffer
         vector_buffer.count = 0;
-        
+        // Reset per-frame saturation warning
+        vector_buffer_full_warned = false;
+
         // Run the DVG (select implementation by compile-time toggle)
-    #if DVG_USE_INTERPRETER
+#if DVG_USE_INTERPRETER
         dvg_execute();
-    #else
+#else
         dvg_run_state_machine();
-    #endif
-        
+#endif
+
+        // Centralized summary output after DVG completes
+        Serial.printf("DVG finished: frame=%d, vectors=%d, halt=%d, PC=0x%04X\n",
+                      dvg_frame_count, vector_buffer.count, dvg_state.halt ? 1 : 0, dvg_state.pc);
+
+        // Output generated vectors as CSV: X,Y,Intensity (10-bit coords, 0-1023; intensity 0-15)
+        Serial.println("X,Y,Intensity");
+        for (int i = 0; i < vector_buffer.count; i++) {
+            int px = vector_buffer.points[i][0];
+            int py = vector_buffer.points[i][1];
+            int pz = vector_buffer.intensity[i];
+
+            // Detect if stored values are DAC (0-4095) or DVG (0-1023)
+            int dvg_x = (px > 1023) ? (px * 1023) / 4095 : px;
+            int dvg_y = (py > 1023) ? (py * 1023) / 4095 : py;
+            int intensity = (pz > 15) ? (pz * 15) / 255 : pz;
+
+            Serial.printf("%d,%d,%d\n", dvg_x, dvg_y, intensity);
+        }
+
         return;
     }
     
@@ -938,40 +1136,17 @@ uint16_t dvg_read_word(uint16_t addr) {
 void dvg_execute() {
     dvg_reset();
     vector_buffer.count = 0;
-    
-    // Debug: Check if vector RAM has data
-    static bool first_time = true;
-    if (first_time) {
-        first_time = false;
-        Serial.println("Vector RAM first 32 bytes:");
-        for (int i = 0; i < 32; i++) {
-            Serial.printf("%02X ", vector_ram[i]);
-            if ((i + 1) % 16 == 0) Serial.println();
-        }
-    }
-    
+
     // DVG starts at address 0 in vector RAM
     int max_ops = 10000;  // Safety limit
-    
-    static int debug_op_count = 0;
     int ops_this_frame = 0;
-    
+
     while (!dvg_state.halt && max_ops-- > 0) {
         uint16_t opcode = dvg_read_word(dvg_state.pc);
         uint16_t pc_before = dvg_state.pc;
         dvg_state.pc += 2;
-        
-        // Decode opcode (see MAME avgdvg.cpp for reference)
         uint8_t op = (opcode >> 12) & 0x0F;
-        
-        // Debug first 20 opcodes
-        if (debug_op_count < 20) {
-            Serial.printf("DVG[%d]: PC=0x%04X Op=0x%X Opcode=0x%04X\n", 
-                debug_op_count, pc_before, op, opcode);
-            debug_op_count++;
-        }
         ops_this_frame++;
-        
         switch (op) {
             case 0x0: // VCTR - Draw vector
             case 0x1:
@@ -1371,8 +1546,10 @@ void loop() {
         static int frame_number = 0;
         static bool csv_header_printed = false;
         
-        // CSV OUTPUT: only for selected frames (whitelist)
-        // This avoids noisy interleaved CSV lines for all frames.
+        // CSV OUTPUT: only enabled when `DEBUG_VECTOR` is defined in `src/config.h`.
+        // By default this is disabled to avoid duplicate/verbose vector dumps.
+#ifdef DEBUG_VECTOR
+        // Only output CSV for selected frames (whitelist)
         const int csv_whitelist[] = {1, 20, 100};
         const int csv_whitelist_len = sizeof(csv_whitelist) / sizeof(csv_whitelist[0]);
         bool csv_want = false;
@@ -1399,6 +1576,7 @@ void loop() {
                     vector_buffer.intensity[i]);
             }
         }
+#endif
 
         // Always advance the frame counter (keeps numbering correct even if CSV is off)
         frame_number++;
