@@ -21,6 +21,8 @@
 #include "asteroid_roms.h"
 #include "dvg_prom.h"
 
+
+
 // ============================================================================
 // GLOBAL STATE
 // ============================================================================
@@ -240,6 +242,7 @@ void dvg_update_databus() {
 
 // Forward declaration
 int dvg_handler_7();
+void dvg_execute();
 
 // DVG Handler 0: DMAPUSH (push to stack)
 int dvg_handler_0() {
@@ -750,8 +753,12 @@ void cpu6502_write_callback(uint16_t addr, uint8_t value) {
         // Clear previous vector buffer
         vector_buffer.count = 0;
         
-        // Run the DVG state machine
+        // Run the DVG (select implementation by compile-time toggle)
+    #if DVG_USE_INTERPRETER
+        dvg_execute();
+    #else
         dvg_run_state_machine();
+    #endif
         
         return;
     }
@@ -1088,6 +1095,34 @@ void dvg_execute() {
         }
     }
 }
+
+/*
+ * NOTE: PROM vs Interpreter
+ * -------------------------
+ * This firmware contains two ways to emulate the Atari DVG:
+ *
+ * 1) PROM-driven state machine (`dvg_run_state_machine()`)
+ *    - Models the real hardware microsequencer: reads a 256x4 PROM,
+ *      updates a 4-bit latch, examines ST3 and calls one of 8
+ *      handlers (LATCH0..LATCH3, GOSTROBE, HALT, DMAPUSH, DMALD).
+ *    - Reads the data bus one byte at a time and relies on the
+ *      PROM to schedule micro-ops. This gives cycle-accurate
+ *      sequencing and matches MAME's implementation.
+ *
+ * 2) Flat interpreter (`dvg_execute()`)
+ *    - Reads full 16-bit opcodes (words) and executes them via a
+ *      switch/case over opcodes (VCTR/LABS/JSRL/RTSL/JMPL/SVEC/HALT).
+ *    - Simpler to read and useful for debugging, but it collapses
+ *      the PROM's micro-ops (byte-level timing) into single steps.
+ *
+ * Functional equivalence: both approaches produce the same high-level
+ * vector operations in most cases, but differences can appear for
+ * timing-sensitive sequences (HALT timing, OP==0xF special cases,
+ * byte/word boundary behavior, and rare microsequence corner-cases).
+ *
+ * Use the `DVG_USE_INTERPRETER` macro (defined near the includes)
+ * to switch between the two implementations at compile time.
+ */
 
 void process_vector_list() {
     // Don't increment frame_count here - it's done in DVG GO handler!
